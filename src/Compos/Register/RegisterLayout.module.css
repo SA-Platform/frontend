@@ -1,0 +1,79 @@
+
+/*
+
+just styling for the background not important for logic or responsiveness 
+*/
+
+.back{
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    opacity: 0.7;
+    left: 0;
+}
+
+
+.form{
+    background: white;
+    background: linear-gradient(
+      to right bottom,
+      rgba(255, 255, 255, 0.4),
+      rgba(255, 255, 255, 0.2)
+    );
+    backdrop-filter: blur(1rem);
+    z-index: 1;
+    border-radius: 5rem;
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.2);
+}
+
+.circle{
+  background: rgb(155, 223, 246);
+  background: linear-gradient(
+    to right bottom,
+    #f1f7ff,
+    #bfd9fc
+  );
+  position: absolute;
+  border-radius: 50%;
+}
+
+.circle1 {
+    top: 0%;
+    left: 0%;
+    height: 40rem;
+    width: 40rem;
+    transform: translate(-50%, -50%);
+  }
+  
+  .circle2 {
+    top: 70%;
+    left: 80%;
+    height: 40rem;
+    width: 40rem;
+    transform: translate(-50%, -50%);
+  }
+
+  .circle3 {
+    top: 10%;
+    left: 65%;
+    height: 10rem;
+    width: 10rem;
+    transform: translate(-50%, -50%);
+  }
+  
+  .circle4 {
+    top: 70%;
+    left: 35%;
+    height: 20rem;
+    width: 20rem;
+    transform: translate(-50%, -50%);
+  }
+
+
+  .circle5 {
+    top: 70%;
+    left: 10%;
+    height: 5rem;
+    width: 5rem;
+    transform: translate(-50%, -50%);
+  }
