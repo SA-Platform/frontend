@@ -18,7 +18,7 @@ import {
   Col,
   Divider,
   Steps,
-  message,
+  message
 } from "antd";
 import ImgCrop from "antd-img-crop";
 import type { FormInstance } from "antd/es/form";
@@ -29,52 +29,66 @@ interface RegisterStepProps {
   form: FormInstance;
 }
 
+function setCookie(name, value, daysToExpire) {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + daysToExpire * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+}
+
+/**
+
+ Dynamic Validation from backend #####################################################################
+ */
+
 const RegisterStep = ({ form }: RegisterStepProps) => {
   const validateUserHandler = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    // const data = JSON.stringify({
-    //     // username: "twibster0x_11",
-    //   })
+    const response: any = await fetch(
+      `http://127.0.0.1:8000/users/check-username`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: form.getFieldValue("username") }),
+      }
+    );
+    const data = await response.json();
 
-    //   console.log(data);
+    console.log(data);
 
-    // const response = await fetch(`http://127.0.0.1:8000/users/check-username`, {
-    //   mode: "no-cors",
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: data,
-    //   redirect: 'follow'
-    // }).then((resp) => {
-    //     console.log(resp)
-    //   })
-    //   .catch((err) => {
-    //     console.log(err);
-    //   });
-
-    // if (!response.ok) {
-    //   form.setFields([
-    //     {
-    //       name: "userName",
-    //       errors: ["This user name is taken"],
-    //     },
-    //   ]);
-    // } else {
-    //   form.setFields([
-    //     {
-    //       name: "userName",
-    //       errors: [],
-    //     },
-    //   ]);
-    //   console.log("everything is ok");
-    // }
+    if (response) {
+      if (response.ok) {
+        form.setFields([
+          {
+            name: "username",
+            errors: [],
+          },
+        ]);
+      } else if (response.status == 409) {
+        form.setFields([
+          {
+            name: "username",
+            errors: [data.detail],
+          },
+        ]);
+      } else if (response.status == 422) {
+        form.setFields([
+          {
+            name: "username",
+            errors: [data.detail[0].msg],
+          },
+        ]);
+      }
+    }
 
     console.log("hi");
   };
 
   const validateEmailHandler = (e: React.ChangeEvent<HTMLInputElement>) => {};
+
+  // const validatePassHandler = (e: )
 
   const formProps = {
     username: {
@@ -96,9 +110,9 @@ const RegisterStep = ({ form }: RegisterStepProps) => {
         <Form.Item {...formProps.email}>
           <Input placeholder="Email" />
         </Form.Item>
-        <Form.Item name="natID" label="">
+        {/* <Form.Item name="natID" label="">
           <Input placeholder="National ID" />
-        </Form.Item>
+        </Form.Item> */}
 
         <Form.Item name="password" label="">
           <Input.Password placeholder="Password" />
@@ -111,15 +125,21 @@ const RegisterStep = ({ form }: RegisterStepProps) => {
 interface ProfileStepProps {
   step: string;
   form: FormInstance;
+  setUploaded: any;
+  uploaded: any;
 }
 
-const ProfileStep = ({ step, form }: ProfileStepProps) => {
+const ProfileStep = ({
+  step,
+  form,
+  setUploaded,
+  uploaded,
+}: ProfileStepProps) => {
   const [gender, setGender] = useState<string>("");
-  const [uploaded, setUploaded] = useState<UploadFile<any>[]>([]);
 
   const validateFileType = (
     { type, name }: UploadFile,
-    allowedTypes: string[] = ["image/jpg", "image/jpeg"]
+    allowedTypes: string[] = ["image/jpg", "image/jpeg", "image/png"]
   ) => {
     return allowedTypes.includes(type!);
   };
@@ -179,6 +199,46 @@ const ProfileStep = ({ step, form }: ProfileStepProps) => {
     setUploaded(newFileList);
   };
 
+  const validatePhoneHandler = () => {
+    let re = /^\(?(\d{3})\)?[- ]?(\d{3})[- ]?(\d{4})$/;
+    let num = form.getFieldValue("phone")
+    if(re.test(num)){
+      console.log("hi right");
+      
+      form.setFields([
+        {
+          name: "phone",
+          errors: [],
+        },
+      ]);
+    }else{
+      console.log("hi wrong");
+      form.setFields([
+        {
+          name: "phone",
+          errors: [],
+        },
+      ]);
+    }
+  }
+
+  const formProps = {
+    phone: {
+      name: "phone",
+      onChange: validatePhoneHandler,
+    }
+  };
+
+
+  const countryCode = (
+    <Select defaultValue="+20">
+      <Select.Option value="+1">+1</Select.Option>
+      <Select.Option value="+2">+2</Select.Option>
+      <Select.Option value="+3">+3</Select.Option>
+      <Select.Option value="+20">+20</Select.Option>
+    </Select>
+  );
+
   return (
     <>
       <Col span={24}>
@@ -218,8 +278,8 @@ const ProfileStep = ({ step, form }: ProfileStepProps) => {
       </Col>
 
       <Col span={24}>
-        <Form.Item name="phone">
-          <Input placeholder="Phone Number" addonBefore={"+20"} />
+        <Form.Item {...formProps.phone}>
+          <Input placeholder="Phone Number" addonBefore={countryCode} />
         </Form.Item>
       </Col>
 
@@ -349,7 +409,6 @@ interface userData {
   username: string;
   email: string;
   password: string;
-  image_file: string;
   bio: string;
   first_name: string;
   last_name: string;
@@ -366,6 +425,7 @@ const RegisterLayout = () => {
   const [step, setStep] = useState<string>("register");
   const [form] = Form.useForm();
   const [user, setUser] = useState<userData>();
+  const [uploaded, setUploaded] = useState<UploadFile<any>[]>([]);
 
   const validateFormHandler = async () => {
     if (step == "register") {
@@ -394,11 +454,10 @@ const RegisterLayout = () => {
         username: form.getFieldValue("username"),
         email: form.getFieldValue("email"),
         password: form.getFieldValue("password"),
-        image_file: "https://www.imgonline.com.ua/examples/rose-mini.jpg",
         bio: "hi this is my bio",
         first_name: form.getFieldValue("firstName"),
         last_name: form.getFieldValue("lastName"),
-        phone_number: form.getFieldValue("phone"),
+        phone_number: form.getFieldValue("phone").trim(),
         birthdate: new Date(form.getFieldValue("birth")),
         // gender: form.getFieldValue("gender"),
         university: form.getFieldValue("uni"),
@@ -406,23 +465,48 @@ const RegisterLayout = () => {
         faculty_department: form.getFieldValue("department"),
         graduation_year: new Date(form.getFieldValue("gradYear")).getFullYear(),
       };
-      debugger
+
       const response = await fetch("http://localhost:8000/users/signup", {
-        // mode: "no-cors",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(temp),
+      }).then(async (res) => {
+        let data = await res.json();
+        console.log(data);
+
+        const accessToken = data["access_token"];
+        const expirationDays = 7; // Number of days until the cookie expires
+        setCookie("user", accessToken, expirationDays);
+
+        if (res.status == 201) {
+          let formData = new FormData();
+
+          formData.append("file", uploaded[0], uploaded[0].name);
+
+          const fileResponse = await fetch(
+            "http://localhost:8000/users/uploadfile/",
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+          window.location.reload();
+        }
       });
-      console.log(response);
-      
+
+      // Upload Image request
     }
+  };
+
+  const backHandler = () => {
+    setStep("register");
   };
 
   return (
     <>
-      {/* start background styling */}
+      {/* background styling */}
       <div className={`${styles.back}`}>
         <div className={`${styles.circle} ${styles.circle1}`}></div>
 
@@ -432,7 +516,7 @@ const RegisterLayout = () => {
         <div className={`${styles.circle} ${styles.circle5}`}></div>
       </div>
 
-      {/* End background styling */}
+      {/* Form */}
 
       <Form
         style={{
@@ -482,14 +566,21 @@ const RegisterLayout = () => {
           {
             {
               register: <RegisterStep form={form} />,
-              profile: <ProfileStep step={step} form={form} />,
+              profile: (
+                <ProfileStep
+                  step={step}
+                  form={form}
+                  uploaded={uploaded}
+                  setUploaded={setUploaded}
+                />
+              ),
             }[step]
           }
 
           {/* <Divider /> */}
 
           <Col span={12} style={{ justifySelf: "flex-end" }}>
-            <Button block disabled={step == "register"}>
+            <Button block disabled={step == "register"} onClick={backHandler}>
               Previous
             </Button>
           </Col>
