@@ -20,7 +20,7 @@ function getCookie(name: string) {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState("")
+  const [activeTab, setActiveTab] = useState("home")
   const [user, setUser] = useState<string>("")
 
   useEffect(()=>{
@@ -30,7 +30,7 @@ function App() {
       setUser(accessToken)
       setActiveTab("home")
     }else{
-      setActiveTab("register")
+      // setActiveTab("register")
     }
   }, [])
 
